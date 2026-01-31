@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: cabalgatas-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cabalgatas_db
+      POSTGRES_USER: cabalgatas_user
+      POSTGRES_PASSWORD: cabalgatas_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
