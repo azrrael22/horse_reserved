@@ -11,6 +11,12 @@ CREATE TABLE tipo_documento (
                                 PRIMARY KEY (id_tipo_doc)
 );
 
+CREATE TABLE tipo_usuario (
+                            id_tipo_usuario SERIAL NOT NULL,
+                            tipo VARCHAR(50) NOT NULL,
+                            PRIMARY KEY (id_tipo_usuario)
+);
+
 CREATE TABLE usuario (
                          id_usuario SERIAL NOT NULL,
                          primer_nombre VARCHAR(255) NOT NULL,
@@ -20,8 +26,10 @@ CREATE TABLE usuario (
                          genero CHARACTER(1) NOT NULL,
                          contrasena VARCHAR(255) NOT NULL,
                          correo VARCHAR(255) NOT NULL,
+                         telefono VARCHAR(50) NOT NULL,
                          fecha_nacimiento DATE NOT NULL,
                          tipo_documento INTEGER NOT NULL,
+                         tipo_usuario INTEGER NOT NULL,
                          PRIMARY KEY (id_usuario)
 );
 
@@ -34,3 +42,8 @@ ALTER TABLE usuario
     ADD CONSTRAINT fk_usuario_tipo_documento
         FOREIGN KEY (tipo_documento)
             REFERENCES tipo_documento(id_tipo_doc);
+
+ALTER TABLE usuario
+    ADD CONSTRAINT fk_usuario_tipo_usuario
+        FOREIGN KEY (tipo_usuario)
+            REFERENCES tipo_usuario(id_tipo_usuario);
