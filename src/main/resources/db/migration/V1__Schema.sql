@@ -2,17 +2,17 @@
 -- 1. Tablas básicas
 -- =========================
 
+-- Tipos de documento
+CREATE TABLE tipo_documento (
+                                id_tipo_doc SERIAL PRIMARY KEY,
+                                nombre_tipo VARCHAR(255) NOT NULL
+);
+
 -- Documentos de identidad (catálogo)
 CREATE TABLE documento_identidad (
                                      id_documento_identidad SERIAL PRIMARY KEY,
-                                     documento VARCHAR(255) NOT NULL
-);
-
--- Tipos de documento (relacionado con documento_identidad si lo deseas)
-CREATE TABLE tipo_documento (
-                                id_tipo_doc SERIAL PRIMARY KEY,
-                                nombre_tipo VARCHAR(255) NOT NULL,
-                                id_documento_identidad INTEGER NOT NULL REFERENCES documento_identidad(id_documento_identidad)
+                                     documento VARCHAR(255) NOT NULL,
+                                     id_tipo_doc INTEGER NOT NULL REFERENCES tipo_documento(id_tipo_doc)
 );
 
 -- Usuarios (clientes, guías, admins) -- contrasena aquí es solo un campo; en producción guarda hash
@@ -27,7 +27,7 @@ CREATE TABLE usuario (
                          fecha_nacimiento DATE,
                          imagen_usuario_url VARCHAR(500),
                          activo BOOLEAN NOT NULL DEFAULT TRUE,
-                         id_tipo_doc INTEGER REFERENCES tipo_documento(id_tipo_doc)
+                         id_tipo_doc INTEGER NOT NULL REFERENCES tipo_documento(id_tipo_doc)
 );
 
 -- Roles (CLIENTE, GUIA, ADMIN)
