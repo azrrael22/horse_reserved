@@ -6,6 +6,7 @@ import horse_reserved.dto.response.AuthResponse;
 import horse_reserved.exception.EmailAlreadyExistsException;
 import horse_reserved.exception.InvalidCredentialsException;
 import horse_reserved.exception.UserInactiveException;
+import horse_reserved.model.TipoDocumento;
 import horse_reserved.model.Usuario;
 import horse_reserved.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +43,7 @@ public class AuthService {
         Usuario usuario = Usuario.builder()
                 .primerNombre(request.getPrimerNombre())
                 .primerApellido(request.getPrimerApellido())
-                .tipoDocumento(request.getTipoDocumento())
+                .tipoDocumento(TipoDocumento.fromString(request.getTipoDocumento()))
                 .documento(request.getDocumento())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
