@@ -6,6 +6,8 @@ import horse_reserved.model.TipoDocumento;
 import horse_reserved.model.Usuario;
 import horse_reserved.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -65,18 +67,47 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return oAuth2User;
     }
 
+    //Metodo para extraer los apellidos de una cuenta de Google
+    private String[] extraerApellidos(String nombreCompleto) {
+        String[] partes = nombreCompleto.trim().split("\\s+");
+
+        String primerApellido = "";
+        String segundoApellido = "";
+
+        if (partes.length == 2) {
+            // "Juan García" → un apellido
+            primerApellido = partes[1];
+        } else if (partes.length >= 3) {
+            // "Juan García López" o "Juan Carlos García López" → últimas dos partes
+            primerApellido = partes[partes.length - 2];
+            segundoApellido = partes[partes.length - 1];
+        }
+
+        return new String[]{primerApellido, segundoApellido};
+    }
+
     private Usuario registerNewUser(OAuth2UserInfo oAuth2UserInfo) {
-        // Separar el nombre completo en primer nombre y apellido
-        String[] nameParts = oAuth2UserInfo.getName().split(" ", 2);
-        String primerNombre = nameParts[0];
-        String primerApellido = nameParts.length > 1 ? nameParts[1] : "";
+        // Extraer apellidos del nombre completo
+        String[] apellidos = extraerApellidos(oAuth2UserInfo.getName());
+        String primerNombre = oAuth2UserInfo.getName().trim().split("\\s+")[0];
+        String primerApellido = apellidos[0];
+        //String segundoApellido = apellidos[1];
+
+        //Prueba(DESPUES BORRAR)
+        /*
+        Logger logger = LoggerFactory.getLogger(CustomOAuth2UserService.class);
+        logger.info("Nombre completo OAuth2: {}", oAuth2UserInfo.getName());
+        logger.info("Primer nombre: {}", primerNombre);
+        logger.info("Primer apellido: {}", primerApellido);
+        logger.info("Segundo apellido: {}", segundoApellido);
+        */
 
         Usuario usuario = Usuario.builder()
                 .primerNombre(primerNombre)
                 .primerApellido(primerApellido)
                 .email(oAuth2UserInfo.getEmail())
                 .passwordHash("") // No hay contraseña para usuarios OAuth2
-                .tipoDocumento(TipoDocumento.CEDULA) // Por defecto
+                .tipoDocumento(TipoDocumento.CEDULA) // Por defecto, despues se debe cambiar
                 .documento("OAUTH2-" + oAuth2UserInfo.getId()) // Temporal
                 .role("cliente")
                 .isActive(true)
@@ -87,11 +118,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private Usuario updateExistingUser(Usuario usuario, OAuth2UserInfo oAuth2UserInfo) {
         // Actualizar información si es necesario
-        String[] nameParts = oAuth2UserInfo.getName().split(" ", 2);
-        usuario.setPrimerNombre(nameParts[0]);
-        if (nameParts.length > 1) {
-            usuario.setPrimerApellido(nameParts[1]);
-        }
+        String[] apellidos = extraerApellidos(oAuth2UserInfo.getName());
+        String primerNombre = oAuth2UserInfo.getName().trim().split("\\s+")[0];
+
+        usuario.setPrimerNombre(primerNombre);
+        usuario.setPrimerApellido(apellidos[0]);
+        //usuario.setSegundoApellido(apellidos[1].isEmpty() ? null : apellidos[1]);
 
         return usuarioRepository.save(usuario);
     }
