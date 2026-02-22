@@ -9,6 +9,8 @@ import horse_reserved.exception.UserInactiveException;
 import horse_reserved.model.TipoDocumento;
 import horse_reserved.model.Usuario;
 import horse_reserved.repository.UsuarioRepository;
+import horse_reserved.dto.response.UserProfileResponse;
+import org.springframework.security.core.context.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -118,6 +120,31 @@ public class AuthService {
                 .primerNombre(usuario.getPrimerNombre())
                 .primerApellido(usuario.getPrimerApellido())
                 .role(usuario.getRole())
+                .build();
+    }
+
+    /**
+     * Retorna el perfil del usuario actualmente autenticado
+     */
+    @Transactional(readOnly = true)
+    public UserProfileResponse getCurrentUser() {
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new InvalidCredentialsException("Usuario no encontrado"));
+
+        return UserProfileResponse.builder()
+                .userId(usuario.getId())
+                .email(usuario.getEmail())
+                .primerNombre(usuario.getPrimerNombre())
+                .primerApellido(usuario.getPrimerApellido())
+                .tipoDocumento(usuario.getTipoDocumento().name())
+                .documento(usuario.getDocumento())
+                .telefono(usuario.getTelefono())
+                .role(usuario.getRole())
+                .isActive(usuario.getIsActive())
                 .build();
     }
 }

@@ -3,6 +3,7 @@ package horse_reserved.controller;
 import horse_reserved.dto.request.LoginRequest;
 import horse_reserved.dto.request.RegisterRequest;
 import horse_reserved.dto.response.AuthResponse;
+import horse_reserved.dto.response.UserProfileResponse;
 import horse_reserved.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,12 +40,13 @@ public class AuthController {
     }
 
     /**
-     * Endpoint de prueba para verificar que la autenticación funciona
+     * Retorna el perfil del usuario autenticado
      * GET /api/auth/me
-     * Requiere autenticación
+     * Requiere: Bearer token válido en el header Authorization
      */
     @GetMapping("/me")
-    public ResponseEntity<String> getCurrentUser() {
-        return ResponseEntity.ok("Usuario autenticado correctamente");
+    public ResponseEntity<UserProfileResponse> getCurrentUser() {
+        UserProfileResponse profile = authService.getCurrentUser();
+        return ResponseEntity.ok(profile);
     }
 }
