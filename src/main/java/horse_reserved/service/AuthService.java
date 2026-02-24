@@ -10,6 +10,7 @@ import horse_reserved.model.TipoDocumento;
 import horse_reserved.model.Usuario;
 import horse_reserved.repository.UsuarioRepository;
 import horse_reserved.dto.response.UserProfileResponse;
+import horse_reserved.dto.request.ChangePasswordRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -146,5 +147,38 @@ public class AuthService {
                 .role(usuario.getRole())
                 .isActive(usuario.getIsActive())
                 .build();
+    }
+
+    /**
+     * Cambia la contraseña del usuario autenticado
+     */
+    @Transactional
+    public void changePassword(ChangePasswordRequest request) {
+        // Obtener el usuario autenticado desde el SecurityContext
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new InvalidCredentialsException("Usuario no encontrado"));
+
+        // Verificar que la contraseña actual sea correcta
+        if (!passwordEncoder.matches(request.getPasswordActual(), usuario.getPasswordHash())) {
+            throw new InvalidCredentialsException("La contraseña actual es incorrecta");
+        }
+
+        // Verificar que la nueva contraseña y la confirmación coincidan
+        if (!request.getPasswordNueva().equals(request.getConfirmarPassword())) {
+            throw new InvalidCredentialsException("La nueva contraseña y la confirmación no coinciden");
+        }
+
+        // Verificar que la nueva contraseña sea diferente a la actual
+        if (passwordEncoder.matches(request.getPasswordNueva(), usuario.getPasswordHash())) {
+            throw new InvalidCredentialsException("La nueva contraseña debe ser diferente a la actual");
+        }
+
+        // Actualizar la contraseña
+        usuario.setPasswordHash(passwordEncoder.encode(request.getPasswordNueva()));
+        usuarioRepository.save(usuario);
     }
 }

@@ -4,6 +4,7 @@ import horse_reserved.dto.request.LoginRequest;
 import horse_reserved.dto.request.RegisterRequest;
 import horse_reserved.dto.response.AuthResponse;
 import horse_reserved.dto.response.UserProfileResponse;
+import horse_reserved.dto.request.ChangePasswordRequest;
 import horse_reserved.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,5 +49,16 @@ public class AuthController {
     public ResponseEntity<UserProfileResponse> getCurrentUser() {
         UserProfileResponse profile = authService.getCurrentUser();
         return ResponseEntity.ok(profile);
+    }
+
+    /**
+     * Cambia la contraseña del usuario autenticado
+     * PUT /api/auth/change-password
+     * Requiere: Bearer token válido
+     */
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(request);
+        return ResponseEntity.ok("Contraseña actualizada correctamente");
     }
 }
