@@ -154,7 +154,6 @@ public class AuthService {
      */
     @Transactional
     public void changePassword(ChangePasswordRequest request) {
-        // Obtener el usuario autenticado desde el SecurityContext
         String email = SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getName();
@@ -162,22 +161,25 @@ public class AuthService {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new InvalidCredentialsException("Usuario no encontrado"));
 
-        // Verificar que la contraseña actual sea correcta
+        // Validación para usuarios registrados con Google OAuth2
+        if (usuario.getPasswordHash() == null || usuario.getPasswordHash().isEmpty()) {
+            throw new InvalidCredentialsException(
+                    "Los usuarios registrados con Google no pueden cambiar la contraseña desde aquí"
+            );
+        }
+
         if (!passwordEncoder.matches(request.getPasswordActual(), usuario.getPasswordHash())) {
             throw new InvalidCredentialsException("La contraseña actual es incorrecta");
         }
 
-        // Verificar que la nueva contraseña y la confirmación coincidan
         if (!request.getPasswordNueva().equals(request.getConfirmarPassword())) {
             throw new InvalidCredentialsException("La nueva contraseña y la confirmación no coinciden");
         }
 
-        // Verificar que la nueva contraseña sea diferente a la actual
         if (passwordEncoder.matches(request.getPasswordNueva(), usuario.getPasswordHash())) {
             throw new InvalidCredentialsException("La nueva contraseña debe ser diferente a la actual");
         }
 
-        // Actualizar la contraseña
         usuario.setPasswordHash(passwordEncoder.encode(request.getPasswordNueva()));
         usuarioRepository.save(usuario);
     }
