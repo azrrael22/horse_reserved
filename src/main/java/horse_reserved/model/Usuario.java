@@ -49,6 +49,7 @@ public class Usuario implements UserDetails {
     @Column(length = 20)
     private String telefono;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private Rol role;
 
