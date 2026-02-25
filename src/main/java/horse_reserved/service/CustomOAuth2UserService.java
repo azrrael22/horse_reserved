@@ -2,6 +2,7 @@ package horse_reserved.service;
 
 import horse_reserved.dto.OAuth2UserInfo;
 import horse_reserved.exception.OAuth2AuthenticationProcessingException;
+import horse_reserved.model.Rol;
 import horse_reserved.model.TipoDocumento;
 import horse_reserved.model.Usuario;
 import horse_reserved.repository.UsuarioRepository;
@@ -109,7 +110,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .passwordHash("") // No hay contraseña para usuarios OAuth2
                 .tipoDocumento(TipoDocumento.CEDULA) // Por defecto, despues se debe cambiar
                 .documento("OAUTH2-" + oAuth2UserInfo.getId()) // Temporal
-                .role("cliente")
+                .role(Rol.CLIENTE)
                 .isActive(true)
                 .build();
 

@@ -18,6 +18,9 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/**
+ * Clase de usuario que permite el login e identificar a las personas que usan el sistema
+ */
 public class Usuario implements UserDetails {
 
     @Id
@@ -46,8 +49,9 @@ public class Usuario implements UserDetails {
     @Column(length = 20)
     private String telefono;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private String role; // cliente, operador, administrador
+    private Rol role;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
@@ -56,7 +60,7 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role));
+        return List.of(new SimpleGrantedAuthority(role.name()));
     }
 
     @Override

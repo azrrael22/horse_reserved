@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+/**
+ * DTO para el proceso de autenticacion
+ */
 public class AuthResponse {
 
     private String token;

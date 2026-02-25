@@ -6,6 +6,7 @@ import horse_reserved.dto.response.AuthResponse;
 import horse_reserved.exception.EmailAlreadyExistsException;
 import horse_reserved.exception.InvalidCredentialsException;
 import horse_reserved.exception.UserInactiveException;
+import horse_reserved.model.Rol;
 import horse_reserved.model.TipoDocumento;
 import horse_reserved.model.Usuario;
 import horse_reserved.repository.UsuarioRepository;
@@ -51,7 +52,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .telefono(request.getTelefono())
-                .role("cliente") // Por defecto todos los registros son clientes
+                .role(Rol.CLIENTE) // Por defecto todos los registros son clientes
                 .isActive(true)
                 .build();
 
@@ -74,7 +75,7 @@ public class AuthService {
                 .email(usuario.getEmail())
                 .primerNombre(usuario.getPrimerNombre())
                 .primerApellido(usuario.getPrimerApellido())
-                .role(usuario.getRole())
+                .role(usuario.getRole().name())
                 .build();
     }
 
@@ -120,7 +121,7 @@ public class AuthService {
                 .email(usuario.getEmail())
                 .primerNombre(usuario.getPrimerNombre())
                 .primerApellido(usuario.getPrimerApellido())
-                .role(usuario.getRole())
+                .role(usuario.getRole().name())
                 .build();
     }
 
