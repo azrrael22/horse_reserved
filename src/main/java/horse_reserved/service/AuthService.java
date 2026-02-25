@@ -145,7 +145,7 @@ public class AuthService {
                 .tipoDocumento(usuario.getTipoDocumento().name())
                 .documento(usuario.getDocumento())
                 .telefono(usuario.getTelefono())
-                .role(usuario.getRole())
+                .role(usuario.getRole().name())
                 .isActive(usuario.getIsActive())
                 .build();
     }
