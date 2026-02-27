@@ -1,11 +1,14 @@
 package horse_reserved.controller;
 
+import horse_reserved.dto.request.ChangePasswordRequest;
+import horse_reserved.dto.request.ForgotPasswordRequest;
 import horse_reserved.dto.request.LoginRequest;
 import horse_reserved.dto.request.RegisterRequest;
+import horse_reserved.dto.request.ResetPasswordRequest;
 import horse_reserved.dto.response.AuthResponse;
 import horse_reserved.dto.response.UserProfileResponse;
-import horse_reserved.dto.request.ChangePasswordRequest;
 import horse_reserved.service.AuthService;
+import horse_reserved.service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     /**
      * Endpoint para registrar un nuevo cliente
@@ -60,5 +64,26 @@ public class AuthController {
     public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         authService.changePassword(request);
         return ResponseEntity.ok("Contraseña actualizada correctamente");
+    }
+
+    /**
+     * Inicia el flujo de recuperación de contraseña.
+     * Siempre responde 200 para no revelar si el email existe.
+     * POST /api/auth/forgot-password
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.processForgotPassword(request.getEmail());
+        return ResponseEntity.ok("Si el correo está registrado, recibirás un enlace para restablecer tu contraseña");
+    }
+
+    /**
+     * Valida el token y establece la nueva contraseña.
+     * POST /api/auth/reset-password
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request.getToken(), request.getNuevaPassword());
+        return ResponseEntity.ok("Contraseña restablecida correctamente. Ya puedes iniciar sesión");
     }
 }

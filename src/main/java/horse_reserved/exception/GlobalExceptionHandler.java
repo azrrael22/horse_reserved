@@ -60,6 +60,25 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Maneja la excepción cuando un token de restablecimiento es inválido o expirado
+     */
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidToken(
+            InvalidTokenException ex,
+            WebRequest request) {
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message(ex.getMessage())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
      * Maneja la excepción cuando un usuario está inactivo
      */
     @ExceptionHandler(UserInactiveException.class)

@@ -51,6 +51,8 @@ dependencies {
     // OAuth2 Client
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
+    // Email
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 
 }
 
