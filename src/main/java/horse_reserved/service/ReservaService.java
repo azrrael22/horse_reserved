@@ -12,6 +12,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -23,6 +25,9 @@ public class ReservaService {
 
     private final ReservaRepository reservaRepository;
     private final SalidaRepository salidaRepository;
+    private final RutaRepository rutaRepository;
+    private final CaballoRepository caballoRepository;
+    private final GuiaRepository guiaRepository;
     private final UsuarioRepository usuarioRepository;
     private final ReservaMapper reservaMapper;
 
@@ -39,11 +44,16 @@ public class ReservaService {
 
         Usuario cliente = usuarioAutenticado();
 
-        Salida salida = salidaRepository.findWithRutaById(request.getSalidaId())
-                .orElseThrow(() -> new ResourceNotFoundException("Salida no encontrada: " + request.getSalidaId()));
+        Salida salida = salidaRepository
+                .findProgramadaByRutaAndFechaAndHora(request.getRutaId(), request.getFecha(), request.getHoraInicio())
+                .orElseGet(() -> crearNuevaSalida(
+                        request.getRutaId(), request.getFecha(), request.getHoraInicio(), request.getCantPersonas()));
 
-        validarSalidaDisponible(salida);
         validarCupoDisponible(salida, request.getCantPersonas());
+
+        long totalPersonas = reservaRepository.sumPersonasReservadasActivasBySalida(salida.getId())
+                + request.getCantPersonas();
+        asignarGuiasSalida(salida, totalPersonas);
 
         Reserva reserva = Reserva.builder()
                 .salida(salida)
@@ -147,25 +157,75 @@ public class ReservaService {
     }
 
     /**
-     * Validacion para saber si una salida esta disponible para reservar
-     * @param salida
+     * Crea una nueva salida para la ruta, fecha y hora indicadas,
+     * asignando todos los caballos disponibles y los guias necesarios.
      */
-    private void validarSalidaDisponible(Salida salida) {
-        String estado = salida.getEstado() == null ? "" : salida.getEstado().toLowerCase();
-        if (!"programado".equals(estado)) {
-            throw new BusinessRuleException("Solo se puede reservar en salidas en estado 'programado'");
+    private Salida crearNuevaSalida(Long rutaId, LocalDate fecha, LocalTime horaInicio, int cantPersonas) {
+        Ruta ruta = rutaRepository.findById(rutaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ruta no encontrada: " + rutaId));
+
+        LocalTime horaFin = horaInicio.plusMinutes(ruta.getDuracionMinutos());
+
+        List<Caballo> caballos = caballoRepository.findDisponibles(fecha, horaInicio, horaFin);
+        if (caballos.isEmpty()) {
+            throw new BusinessRuleException("No hay caballos disponibles para esa fecha y hora");
         }
+
+        Salida nueva = Salida.builder()
+                .ruta(ruta)
+                .fechaProgramada(fecha)
+                .tiempoInicio(horaInicio)
+                .tiempoFin(horaFin)
+                .estado("programado")
+                .build();
+
+        caballos.forEach(nueva::agregarCaballo);
+        asignarGuiasSalida(nueva, (long) cantPersonas);
+
+        return salidaRepository.save(nueva);
+    }
+
+    /**
+     * Asigna los guias necesarios a una salida segun el total de personas.
+     * Regla: <= 8 personas -> 1 guia, > 8 personas -> 2 guias.
+     * Si faltan guias y la salida es hoy o manana, lanza excepcion.
+     * Si la salida es mas adelante, crea la reserva aunque no haya guia extra.
+     */
+    private void asignarGuiasSalida(Salida salida, long totalPersonas) {
+        int guidesNeeded  = totalPersonas > 8 ? 2 : 1;
+        int guidesAssigned = salida.getGuias().size();
+        int guidesToAdd   = guidesNeeded - guidesAssigned;
+
+        if (guidesToAdd <= 0) return;
+
+        List<Guia> disponibles = guiaRepository.findDisponibles(
+                salida.getFechaProgramada(), salida.getTiempoInicio(), salida.getTiempoFin());
+
+        if (disponibles.size() < guidesToAdd && esSalidaInminente(salida.getFechaProgramada())) {
+            throw new BusinessRuleException(
+                    "No hay guías disponibles para cubrir esta salida en la fecha indicada");
+        }
+
+        disponibles.stream().limit(guidesToAdd).forEach(salida::agregarGuia);
+    }
+
+    private boolean esSalidaInminente(LocalDate fecha) {
+        return !fecha.isAfter(LocalDate.now().plusDays(1));
     }
 
     /**
      * Validacion para determinar si hay suficientes cupos en la salida para realizar
-     * una reserva
+     * una reserva. El cupo maximo es el numero de caballos asignados a la salida.
      * @param salida
      * @param nuevosCupos
      */
     private void validarCupoDisponible(Salida salida, int nuevosCupos) {
         long ocupados = reservaRepository.sumPersonasReservadasActivasBySalida(salida.getId());
-        int maximo = salida.getRuta().getMaxCaballos();
+        int maximo = salida.getCaballos().size();
+
+        if (maximo == 0) {
+            throw new BusinessRuleException("La salida no tiene caballos asignados");
+        }
 
         if (ocupados + nuevosCupos > maximo) {
             throw new BusinessRuleException(

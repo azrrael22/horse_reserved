@@ -36,14 +36,6 @@ public class Ruta {
     @Column(name="duracion_minutos", nullable = false)
     private int duracionMinutos;
 
-    @Positive
-    @Column(name="max_caballos", nullable = false)
-    private int maxCaballos;
-
-    @Positive
-    @Column(name="min_guias", nullable = false)
-    private int minGuias;
-
     @Column(name="image_url", length = 500)
     private String urlImagen;
 

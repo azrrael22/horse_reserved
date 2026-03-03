@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Getter
@@ -17,7 +19,13 @@ import java.util.List;
 public class CreateReservaRequest {
 
     @NotNull
-    private Long salidaId;
+    private Long rutaId;
+
+    @NotNull
+    private LocalDate fecha;
+
+    @NotNull
+    private LocalTime horaInicio;
 
     @Min(1)
     private int cantPersonas;
