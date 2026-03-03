@@ -1,5 +1,6 @@
 package horse_reserved.security;
 
+import horse_reserved.dto.response.AuthResponse;
 import horse_reserved.model.Usuario;
 import horse_reserved.repository.UsuarioRepository;
 import horse_reserved.service.JwtService;
@@ -24,9 +25,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
+    private final OAuth2TokenStore tokenStore;
 
-    @Value("${app.oauth2.authorized-redirect-uris:http://localhost:4200/oauth2/redirect}")
+    @Value("${app.oauth2.authorized-redirect-uris:http://localhost:4200/auth/oauth2-redirect}")
     private String redirectUri;
+
+    @Value("${jwt.expiration}")
+    private Long jwtExpiration;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -43,6 +48,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
+    @Override
     protected String determineTargetUrl(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) {
@@ -50,22 +56,30 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
 
-        // Buscar usuario por email
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("Usuario no encontrado"));
 
-        // Generar JWT
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("userId", usuario.getId());
         extraClaims.put("role", usuario.getRole());
 
         String token = jwtService.generateToken(usuario, extraClaims);
 
-        // Construir URL de redirección con el token
+        AuthResponse authResponse = AuthResponse.builder()
+                .token(token)
+                .type("Bearer")
+                .expiresIn(jwtExpiration / 1000)
+                .userId(usuario.getId())
+                .email(usuario.getEmail())
+                .primerNombre(usuario.getPrimerNombre())
+                .primerApellido(usuario.getPrimerApellido())
+                .role(usuario.getRole().name())
+                .build();
+
+        String code = tokenStore.store(authResponse);
+
         return UriComponentsBuilder.fromUriString(redirectUri)
-                .queryParam("token", token)
-                .queryParam("email", usuario.getEmail())
-                .queryParam("role", usuario.getRole())
+                .queryParam("code", code)
                 .build()
                 .toUriString();
     }

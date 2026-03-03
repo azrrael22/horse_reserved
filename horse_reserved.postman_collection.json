@@ -1,0 +1,421 @@
+{
+  "info": {
+    "name": "Horse Reserved API",
+    "description": "## Horse Reserved — Colección de pruebas\n\n**Base URL**: `http://localhost:8080`\n\n### Flujo de prueba recomendado\n1. **Setup DB** → insertar datos mínimos en PostgreSQL (ver notas en carpeta Reservaciones)\n2. **Auth / Register** o **Auth / Login** → el token se guarda automáticamente\n3. **Reservaciones / Crear** → probar los distintos escenarios\n\n### Reglas de negocio clave\n- Cupo de una salida = número de caballos disponibles asignados\n- ≤ 8 personas en la salida → 1 guía asignado automáticamente\n- > 8 personas en la salida → 2 guías asignados automáticamente\n- Si no hay guía disponible y la salida es hoy o mañana → error 400\n- Varias reservas pueden compartir la misma salida (mismo ruta+fecha+hora)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "JWT token — se setea automáticamente al hacer login o register"
+    },
+    {
+      "key": "rutaId",
+      "value": "1",
+      "type": "string",
+      "description": "ID de la ruta a usar en reservas"
+    },
+    {
+      "key": "reservaId",
+      "value": "1",
+      "type": "string",
+      "description": "ID de reserva — se setea automáticamente al crear una reserva"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Endpoints de autenticación. Los de login/register guardan el token automáticamente.",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('token', body.token);",
+                  "  console.log('Token guardado:', body.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"primerNombre\": \"Juan\",\n  \"primerApellido\": \"Pérez\",\n  \"tipoDocumento\": \"cedula\",\n  \"documento\": \"123456789\",\n  \"email\": \"juan@example.com\",\n  \"password\": \"Password123\",\n  \"telefono\": \"+573001234567\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Registra un nuevo usuario (rol CLIENTE por defecto). Guarda el token en la variable `token`.\n\n**tipoDocumento**: cedula | pasaporte | tarjeta_identidad\n**Respuesta**: 201 con AuthResponse"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('token', body.token);",
+                  "  console.log('Token guardado:', body.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"juan@example.com\",\n  \"password\": \"Password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Inicia sesión. Guarda el token en la variable `token`.\n\n**Respuesta**: 200 con AuthResponse"
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Perfil del usuario autenticado.\n\n**Respuesta**: 200 con UserProfileResponse"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"passwordActual\": \"Password123\",\n  \"passwordNueva\": \"NuevoPassword456\",\n  \"confirmarPassword\": \"NuevoPassword456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "change-password"]
+            },
+            "description": "Cambia la contraseña del usuario autenticado.\n\n**Respuesta**: 200 con mensaje de confirmación"
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"juan@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "forgot-password"]
+            },
+            "description": "Solicita reset de contraseña. Siempre devuelve 200 para no revelar si el email existe."
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"TOKEN_DEL_EMAIL\",\n  \"nuevaPassword\": \"NuevoPassword789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "reset-password"]
+            },
+            "description": "Restablece la contraseña usando el token del email.\n\n**Respuesta**: 200 con mensaje de confirmación"
+          }
+        },
+        {
+          "name": "OAuth2 Exchange Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"OAUTH2_CODE_DEL_REDIRECT\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/oauth2/token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "oauth2", "token"]
+            },
+            "description": "Intercambia el código OAuth2 de Google por un JWT.\n\nFlujo: abrir `/oauth2/authorization/google` en el navegador → el redirect incluye el `code` → enviarlo aquí.\n\n**Respuesta**: 200 con AuthResponse | 400 si el código es inválido"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reservaciones",
+      "description": "## Datos mínimos en la DB antes de probar\n\n```sql\n-- Ruta (sin max_caballos ni min_guias desde V6)\nINSERT INTO rutas (nombre, descripcion, dificultad, duracion_minutos, is_active)\nVALUES ('Ruta del Río', 'Paseo fluvial', 'FACIL', 90, true);\n\n-- Caballos (el cupo de la salida = cuántos estén disponibles)\nINSERT INTO caballos (nombre, raza, is_active) VALUES\n  ('Trueno', 'Criollo',  true),\n  ('Luna',   'Andaluz',  true),\n  ('Rocío',  'Criollo',  true),\n  ('Viento', 'Ibérico',  true),\n  ('Bruma',  'Criollo',  true);\n\n-- Guías (≤8 personas → 1 guía, >8 → 2 guías)\nINSERT INTO guias (nombre, telefono, email, is_active) VALUES\n  ('Pedro Guía',  '3001234567', 'pedro@hr.com', true),\n  ('Laura Guía',  '3009876543', 'laura@hr.com', true);\n```\n\n**Flujo de prueba sugerido:**\n1. Crear reserva A (2 personas) → crea la salida con 5 caballos + 1 guía\n2. Crear reserva B (5 personas, mismo ruta+fecha+hora) → reutiliza la salida (total 7, sigue 1 guía)\n3. Crear reserva C (2 personas, mismo ruta+fecha+hora) → total 9 > 8 → asigna 2do guía automáticamente\n4. Intentar reserva D → cupo lleno → 400\n5. Cancelar reserva A → 200\n6. Mis reservas → lista actualizada",
+      "item": [
+        {
+          "name": "Crear Reserva — caso base (2 personas)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('reservaId', body.id);",
+                  "  console.log('Reserva creada, ID:', body.id);",
+                  "  console.log('Salida ID:', body.salidaId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rutaId\": {{rutaId}},\n  \"fecha\": \"2026-04-01\",\n  \"horaInicio\": \"09:00:00\",\n  \"cantPersonas\": 2,\n  \"participantes\": [\n    {\n      \"primerNombre\": \"Ana\",\n      \"primerApellido\": \"García\",\n      \"tipoDocumento\": \"cedula\",\n      \"documento\": \"987654321\",\n      \"edad\": 28,\n      \"cmAltura\": 165,\n      \"kgPeso\": 60.5\n    },\n    {\n      \"primerNombre\": \"Carlos\",\n      \"primerApellido\": \"López\",\n      \"tipoDocumento\": \"cedula\",\n      \"documento\": \"112233445\",\n      \"edad\": 35,\n      \"cmAltura\": 178,\n      \"kgPeso\": 75.0\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservaciones",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservaciones"]
+            },
+            "description": "**Primera reserva** para la salida del 2026-04-01 09:00.\n\nComo no existe salida para ese ruta+fecha+hora, el sistema la crea automáticamente:\n- Asigna todos los caballos disponibles (cupo = 5 si insertaste los 5 del seed)\n- Asigna 1 guía (2 personas ≤ 8)\n\n**Resultado esperado**: 201 con ReservaResponse. Guarda el `reservaId` automáticamente."
+          }
+        },
+        {
+          "name": "Crear Reserva — segunda (5 personas, misma salida)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  console.log('Reserva B creada, ID:', body.id, '| Salida ID:', body.salidaId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rutaId\": {{rutaId}},\n  \"fecha\": \"2026-04-01\",\n  \"horaInicio\": \"09:00:00\",\n  \"cantPersonas\": 5,\n  \"participantes\": [\n    {\n      \"primerNombre\": \"Mónica\",\n      \"primerApellido\": \"Ruiz\",\n      \"tipoDocumento\": \"pasaporte\",\n      \"documento\": \"AB123456\",\n      \"edad\": 30,\n      \"cmAltura\": 160,\n      \"kgPeso\": 58.0\n    },\n    {\n      \"primerNombre\": \"Diego\",\n      \"primerApellido\": \"Mora\",\n      \"tipoDocumento\": \"cedula\",\n      \"documento\": \"223344556\",\n      \"edad\": 25,\n      \"cmAltura\": 175,\n      \"kgPeso\": 70.0\n    },\n    {\n      \"primerNombre\": \"Sara\",\n      \"primerApellido\": \"Castro\",\n      \"tipoDocumento\": \"cedula\",\n      \"documento\": \"334455667\",\n      \"edad\": 22,\n      \"cmAltura\": 162,\n      \"kgPeso\": 55.0\n    },\n    {\n      \"primerNombre\": \"Luis\",\n      \"primerApellido\": \"Pardo\",\n      \"tipoDocumento\": \"cedula\",\n      \"documento\": \"445566778\",\n      \"edad\": 40,\n      \"cmAltura\": 180,\n      \"kgPeso\": 85.0\n    },\n    {\n      \"primerNombre\": \"Elena\",\n      \"primerApellido\": \"Vega\",\n      \"tipoDocumento\": \"cedula\",\n      \"documento\": \"556677889\",\n      \"edad\": 33,\n      \"cmAltura\": 168,\n      \"kgPeso\": 63.5\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservaciones",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservaciones"]
+            },
+            "description": "**Segunda reserva** para la misma salida (ruta 1, 2026-04-01 09:00).\n\nEl sistema reutiliza la salida existente. Total personas = 2 + 5 = 7 (≤ 8), el guía no cambia.\n\n**Resultado esperado**: 201. El `salidaId` en la respuesta debe ser el mismo que la reserva anterior."
+          }
+        },
+        {
+          "name": "Crear Reserva — cruza límite de 8 personas (asigna 2do guía)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  console.log('Reserva C creada, ID:', body.id, '— total > 8, se asignó 2do guía');",
+                  "} else {",
+                  "  console.log('Error:', pm.response.status, pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rutaId\": {{rutaId}},\n  \"fecha\": \"2026-04-01\",\n  \"horaInicio\": \"09:00:00\",\n  \"cantPersonas\": 2,\n  \"participantes\": [\n    {\n      \"primerNombre\": \"Pablo\",\n      \"primerApellido\": \"Gil\",\n      \"tipoDocumento\": \"cedula\",\n      \"documento\": \"667788990\",\n      \"edad\": 45,\n      \"cmAltura\": 172,\n      \"kgPeso\": 80.0\n    },\n    {\n      \"primerNombre\": \"Valeria\",\n      \"primerApellido\": \"Soto\",\n      \"tipoDocumento\": \"cedula\",\n      \"documento\": \"778899001\",\n      \"edad\": 27,\n      \"cmAltura\": 163,\n      \"kgPeso\": 57.0\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservaciones",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservaciones"]
+            },
+            "description": "**Tercera reserva** para la misma salida. Total = 7 + 2 = 9 > 8.\n\nEl sistema asigna automáticamente un 2do guía disponible.\n\n**Resultado esperado**: 201. Verificar en la DB que `salida_guias` tiene 2 filas para esta salida."
+          }
+        },
+        {
+          "name": "Crear Reserva — cupo lleno (debe fallar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 400) {",
+                  "  console.log('OK — cupo lleno rechazado correctamente:', pm.response.json().message);",
+                  "} else {",
+                  "  console.warn('INESPERADO:', pm.response.status);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rutaId\": {{rutaId}},\n  \"fecha\": \"2026-04-01\",\n  \"horaInicio\": \"09:00:00\",\n  \"cantPersonas\": 1,\n  \"participantes\": [\n    {\n      \"primerNombre\": \"Intruso\",\n      \"primerApellido\": \"Test\",\n      \"tipoDocumento\": \"cedula\",\n      \"documento\": \"999999999\",\n      \"edad\": 20,\n      \"cmAltura\": 170,\n      \"kgPeso\": 65.0\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservaciones",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservaciones"]
+            },
+            "description": "Intenta reservar cuando el cupo ya está lleno (9 personas en 5 caballos → lleno desde la reserva C).\n\n**Resultado esperado**: 400 con mensaje 'Cupo insuficiente. Disponibles: 0, solicitados: 1'"
+          }
+        },
+        {
+          "name": "Crear Reserva — ruta distinta misma hora (salida independiente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  console.log('Nueva salida creada para ruta 2, ID salida:', body.salidaId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rutaId\": 2,\n  \"fecha\": \"2026-04-01\",\n  \"horaInicio\": \"09:00:00\",\n  \"cantPersonas\": 1,\n  \"participantes\": [\n    {\n      \"primerNombre\": \"Test\",\n      \"primerApellido\": \"Ruta2\",\n      \"tipoDocumento\": \"cedula\",\n      \"documento\": \"111222333\",\n      \"edad\": 30,\n      \"cmAltura\": 170,\n      \"kgPeso\": 70.0\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservaciones",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservaciones"]
+            },
+            "description": "Prueba que una ruta diferente (rutaId=2) crea su propia salida independiente, aunque sea el mismo horario.\n\n**Pre-requisito**: insertar una segunda ruta en la DB.\n**Resultado esperado**: 201 con un `salidaId` diferente al de las reservas anteriores."
+          }
+        },
+        {
+          "name": "Mis Reservas",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservaciones/mias",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservaciones", "mias"]
+            },
+            "description": "Lista todas las reservas del usuario autenticado, ordenadas por ID descendente.\n\n**Respuesta**: 200 con array de ReservaResponse"
+          }
+        },
+        {
+          "name": "Ver Reserva por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservaciones/{{reservaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservaciones", "{{reservaId}}"]
+            },
+            "description": "Detalle de una reserva. El cliente solo puede ver las suyas; admin/operador ven todas.\n\n**Respuesta**: 200 con ReservaResponse | 403 si no tiene permisos | 404 si no existe"
+          }
+        },
+        {
+          "name": "Cancelar Reserva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  console.log('Reserva cancelada. Estado:', pm.response.json().estado);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservaciones/{{reservaId}}/cancelar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservaciones", "{{reservaId}}", "cancelar"]
+            },
+            "description": "Cancela una reserva. La persona cancelada libera su cupo en la salida.\n\n**Resultado esperado**: 200 con ReservaResponse (estado = 'cancelado')\n**Error 400**: si ya está cancelada o completada\n**Error 403**: si no es el propietario ni admin/operador"
+          }
+        }
+      ]
+    }
+  ]
+}

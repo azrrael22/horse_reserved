@@ -3,10 +3,12 @@ package horse_reserved.controller;
 import horse_reserved.dto.request.ChangePasswordRequest;
 import horse_reserved.dto.request.ForgotPasswordRequest;
 import horse_reserved.dto.request.LoginRequest;
+import horse_reserved.dto.request.OAuth2TokenRequest;
 import horse_reserved.dto.request.RegisterRequest;
 import horse_reserved.dto.request.ResetPasswordRequest;
 import horse_reserved.dto.response.AuthResponse;
 import horse_reserved.dto.response.UserProfileResponse;
+import horse_reserved.security.OAuth2TokenStore;
 import horse_reserved.service.AuthService;
 import horse_reserved.service.PasswordResetService;
 import jakarta.validation.Valid;
@@ -23,6 +25,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
+    private final OAuth2TokenStore oauth2TokenStore;
 
     /**
      * Endpoint para registrar un nuevo cliente
@@ -85,5 +88,16 @@ public class AuthController {
     public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         passwordResetService.resetPassword(request.getToken(), request.getNuevaPassword());
         return ResponseEntity.ok("Contraseña restablecida correctamente. Ya puedes iniciar sesión");
+    }
+
+    /**
+     * Intercambia el código OAuth2 de un solo uso por el AuthResponse con JWT.
+     * POST /api/auth/oauth2/token
+     */
+    @PostMapping("/oauth2/token")
+    public ResponseEntity<AuthResponse> exchangeOAuth2Token(@Valid @RequestBody OAuth2TokenRequest request) {
+        return oauth2TokenStore.consume(request.getCode())
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.badRequest().build());
     }
 }
