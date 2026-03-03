@@ -44,7 +44,7 @@ public class Usuario implements UserDetails {
     private TipoDocumento tipoDocumento;
 
     @NotBlank
-    @Positive
+    //@Positive
     @Column(name = "documento", nullable = false, length = 50)
     private String documento;
 
@@ -56,7 +56,7 @@ public class Usuario implements UserDetails {
     @Column(name = "password_hash")
     private String passwordHash;
 
-    @NotBlank
+    //@NotBlank
     @Column(name = "telefono", length = 20)
     private String telefono;
 
