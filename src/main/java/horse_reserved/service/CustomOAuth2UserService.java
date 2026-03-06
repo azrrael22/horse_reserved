@@ -128,7 +128,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .primerNombre(primerNombre)
                 .primerApellido(primerApellido)
                 .email(oAuth2UserInfo.getEmail())
-                .passwordHash(null) // No hay contraseña para usuarios OAuth2
+                .passwordHash("") // No hay contraseña para usuarios OAuth2
                 .tipoDocumento(TipoDocumento.CEDULA) // Por defecto, despues se debe cambiar
                 .documento("OAUTH2-" + oAuth2UserInfo.getId()) // Temporal
                 .role(Rol.CLIENTE)
