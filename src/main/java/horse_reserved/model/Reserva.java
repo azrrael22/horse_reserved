@@ -34,7 +34,7 @@ public class Reserva {
      * Define la relacion de muchos a 1 entre Cliente y reservas
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="client_id", nullable=false)
+    @JoinColumn(name="client_id", nullable=true)
     private Usuario cliente;
 
     /**
@@ -64,13 +64,9 @@ public class Reserva {
      * @param participante
      * @return
      */
-    public boolean agregarParticipante(Participante participante) {
-        if(!participantes.contains(participante)){
-            participantes.add(participante);
-            participante.setReserva(this);
-            return true;
-        }
-        return false;
+    public void agregarParticipante(Participante participante) {
+        participantes.add(participante);
+        participante.setReserva(this);
     }
 
     /**
