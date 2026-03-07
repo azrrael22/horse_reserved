@@ -10,20 +10,20 @@ import java.util.List;
 @Repository
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
-    @EntityGraph(attributePaths = {"salida", "salida.ruta", "cliente", "operador", "participantes"})
+    @EntityGraph(attributePaths = {"salida", "salida.ruta", "cliente", "operador", "participantes", "precio"})
     List<Reserva> findByClienteIdOrderByIdDesc(Long clienteId);
 
-    @EntityGraph(attributePaths = {"salida", "salida.ruta", "cliente", "operador", "participantes"})
+    @EntityGraph(attributePaths = {"salida", "salida.ruta", "cliente", "operador", "participantes", "precio"})
     List<Reserva> findByOperadorIdOrderByIdDesc(Long operadorId);
 
-    @EntityGraph(attributePaths = {"salida", "salida.ruta", "cliente", "operador", "participantes"})
+    @EntityGraph(attributePaths = {"salida", "salida.ruta", "cliente", "operador", "participantes", "precio"})
     List<Reserva> findBySalidaIdOrderByIdDesc(Long salidaId);
 
-    @EntityGraph(attributePaths = {"salida", "salida.ruta", "cliente", "operador", "participantes"})
+    @EntityGraph(attributePaths = {"salida", "salida.ruta", "cliente", "operador", "participantes", "precio"})
     @Query("select r from Reserva r order by r.id desc")
     List<Reserva> findAllOrderByIdDesc();
 
-    @EntityGraph(attributePaths = {"salida", "salida.ruta", "cliente", "operador", "participantes"})
+    @EntityGraph(attributePaths = {"salida", "salida.ruta", "cliente", "operador", "participantes", "precio"})
     java.util.Optional<Reserva> findDetailedById(Long id);
 
     @Query("""

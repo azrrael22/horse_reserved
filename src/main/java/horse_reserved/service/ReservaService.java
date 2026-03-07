@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -74,11 +75,16 @@ public class ReservaService {
                 + request.getCantPersonas();
         asignarGuiasSalida(salida, totalPersonas);
 
+        BigDecimal precioUnitario = salida.getRuta().getPrecio();
+        BigDecimal precioTotal = salida.getRuta().getPrecio().multiply(BigDecimal.valueOf(totalPersonas));
+
         Reserva reserva = Reserva.builder()
                 .salida(salida)
                 .cliente(cliente)
                 .operador(operador)
                 .cantPersonas(request.getCantPersonas())
+                .precioUnitario(precioUnitario)
+                .precioTotal(precioTotal)
                 .estado("reservado")
                 .build();
 
