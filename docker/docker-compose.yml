@@ -1,18 +1,54 @@
-
-
 services:
   postgres:
     image: postgres:17
     container_name: cabalgatas-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: cabalgatas_db
-      POSTGRES_USER: cabalgatas_user
-      POSTGRES_PASSWORD: cabalgatas_pass
+      POSTGRES_DB: ${DB_NAME:-cabalgatas_db}
+      POSTGRES_USER: ${DB_USER:-cabalgatas_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-cabalgatas_pass}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-cabalgatas_user} -d ${DB_NAME:-cabalgatas_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: cabalgatas-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-cabalgatas_db}
+      DB_USER: ${DB_USER:-cabalgatas_user}
+      DB_PASSWORD: ${DB_PASSWORD:-cabalgatas_pass}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GMAIL_USERNAME: ${GMAIL_USERNAME}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4200}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+      OAUTH2_AUTHORIZED_REDIRECT_URIS: ${OAUTH2_AUTHORIZED_REDIRECT_URIS:-http://localhost:4200/auth/oauth2-redirect}
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ../../horse_reserved_front
+    container_name: horse-frontend
+    ports:
+      - "4200:80"
 
 volumes:
   postgres_data:
