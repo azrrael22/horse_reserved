@@ -7,6 +7,8 @@ import horse_reserved.dto.response.ReservaResponse;
 import horse_reserved.exception.*;
 import horse_reserved.model.*;
 import horse_reserved.repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,6 +34,9 @@ public class ReservaService {
     private final GuiaRepository guiaRepository;
     private final UsuarioRepository usuarioRepository;
     private final ReservaMapper reservaMapper;
+
+    @PersistenceContext
+    private EntityManager em;
 
     /**
      * Metodo para realizar una reserva nueva
@@ -176,6 +181,7 @@ public class ReservaService {
         }
 
         reserva.getParticipantes().clear();
+        em.flush(); // forza DELETE de orphans antes de los INSERT para evitar constraint uq_participant_doc
         for (ParticipanteRequest pReq : request.getParticipantes()) {
             Participante p = Participante.builder()
                     .primerNombre(pReq.getPrimerNombre().trim())
@@ -291,7 +297,7 @@ public class ReservaService {
                 .estado("programado")
                 .build();
 
-        caballos.stream().limit(cantPersonas).forEach(nueva::agregarCaballo);
+        caballos.forEach(nueva::agregarCaballo);
         asignarGuiasSalida(nueva, (long) cantPersonas);
 
         return salidaRepository.save(nueva);
