@@ -52,6 +52,7 @@ public class SecurityConfig {
                         // Endpoints públicos
                         .requestMatchers("/api/auth/**", "/oauth2/**").permitAll()
                         .requestMatchers("/api/rutas/public/**").permitAll()
+                        .requestMatchers("/api/chatbot/faq/**").permitAll()
 
                         // Endpoints que requieren autenticación
                         .requestMatchers("/api/reservaciones/**").hasAnyAuthority("CLIENTE", "OPERADOR", "ADMINISTRADOR")

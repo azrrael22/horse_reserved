@@ -1,0 +1,278 @@
+{
+  "version": "1.0.0",
+  "locale": "es-CO",
+  "fallback": {
+    "message": "No estoy 100% seguro de tu consulta. Te puedo ayudar con registro, login, rutas, reservas, cambios y cancelaciones.",
+    "suggestions": ["registro_usuario", "login_usuario", "listar_rutas_publicas", "crear_reserva", "cancelar_reserva"]
+  },
+  "intents": [
+    {
+      "id": "registro_usuario",
+      "categoria": "auth",
+      "threshold": 0.72,
+      "utterances": [
+        "cómo me registro",
+        "crear cuenta",
+        "abrir cuenta",
+        "quiero registrarme",
+        "no tengo cuenta"
+      ],
+      "keywords": ["registro", "registrar", "cuenta", "crear usuario", "sign up"],
+      "synonyms": {
+        "registrar": ["crear", "abrir", "dar de alta"],
+        "cuenta": ["usuario", "perfil"]
+      },
+      "response": {
+        "text": "Para registrarte usa POST /api/auth/register con datos personales, contraseña, recaptchaToken y aceptación de habeas data.",
+        "endpoint": "/api/auth/register",
+        "authRequired": false,
+        "notes": [
+          "El primer nombre/apellido son obligatorios.",
+          "Debe incluir recaptchaToken.",
+          "Debe aceptar política de tratamiento de datos."
+        ]
+      }
+    },
+    {
+      "id": "login_usuario",
+      "categoria": "auth",
+      "threshold": 0.72,
+      "utterances": [
+        "cómo inicio sesión",
+        "no puedo iniciar sesión",
+        "hacer login",
+        "entrar a mi cuenta"
+      ],
+      "keywords": ["login", "iniciar sesión", "acceder", "entrar", "autenticar"],
+      "synonyms": {
+        "login": ["iniciar sesión", "autenticar", "entrar"]
+      },
+      "response": {
+        "text": "Para iniciar sesión usa POST /api/auth/login con email, password y recaptchaToken.",
+        "endpoint": "/api/auth/login",
+        "authRequired": false,
+        "notes": [
+          "Si credenciales son inválidas devuelve 401.",
+          "Si usuario está inactivo puede devolver 403."
+        ]
+      }
+    },
+    {
+      "id": "perfil_actual",
+      "categoria": "auth",
+      "threshold": 0.7,
+      "utterances": [
+        "ver mi perfil",
+        "mis datos",
+        "quién soy",
+        "datos de mi cuenta"
+      ],
+      "keywords": ["perfil", "me", "cuenta", "usuario actual"],
+      "response": {
+        "text": "Consulta tu perfil con GET /api/auth/me enviando Authorization: Bearer <JWT>.",
+        "endpoint": "/api/auth/me",
+        "authRequired": true
+      }
+    },
+    {
+      "id": "cambiar_password",
+      "categoria": "auth",
+      "threshold": 0.72,
+      "utterances": [
+        "cambiar contraseña",
+        "actualizar clave",
+        "modificar password"
+      ],
+      "keywords": ["contraseña", "clave", "password", "cambiar"],
+      "synonyms": {
+        "contraseña": ["clave", "password", "pass"]
+      },
+      "response": {
+        "text": "Cambia tu contraseña con PUT /api/auth/change-password (requiere JWT).",
+        "endpoint": "/api/auth/change-password",
+        "authRequired": true
+      }
+    },
+    {
+      "id": "olvide_password",
+      "categoria": "auth",
+      "threshold": 0.72,
+      "utterances": [
+        "olvidé mi contraseña",
+        "recuperar clave",
+        "restablecer password",
+        "no recuerdo mi clave"
+      ],
+      "keywords": ["olvidé", "recuperar", "restablecer", "token", "correo"],
+      "response": {
+        "text": "Solicita recuperación con POST /api/auth/forgot-password enviando email y recaptchaToken.",
+        "endpoint": "/api/auth/forgot-password",
+        "authRequired": false,
+        "notes": [
+          "Siempre responde 200 para no revelar si el correo existe."
+        ]
+      }
+    },
+    {
+      "id": "reset_password_token",
+      "categoria": "auth",
+      "threshold": 0.72,
+      "utterances": [
+        "cómo uso el token de recuperación",
+        "token expirado",
+        "restablecer con token"
+      ],
+      "keywords": ["token", "reset", "expirado", "inválido", "nueva contraseña"],
+      "response": {
+        "text": "Restablece contraseña con POST /api/auth/reset-password enviando token y nuevaPassword.",
+        "endpoint": "/api/auth/reset-password",
+        "authRequired": false,
+        "notes": [
+          "Si token es inválido/expirado/ya usado devuelve 400."
+        ]
+      }
+    },
+    {
+      "id": "login_google",
+      "categoria": "auth_oauth2",
+      "threshold": 0.7,
+      "utterances": [
+        "entrar con google",
+        "login con google",
+        "oauth google"
+      ],
+      "keywords": ["google", "oauth", "oauth2", "social login"],
+      "response": {
+        "text": "Inicia OAuth2 y luego intercambia código en POST /api/auth/oauth2/token.",
+        "endpoint": "/api/auth/oauth2/token",
+        "authRequired": false
+      }
+    },
+    {
+      "id": "listar_rutas_publicas",
+      "categoria": "rutas",
+      "threshold": 0.68,
+      "utterances": [
+        "qué rutas hay",
+        "listar rutas",
+        "ver rutas disponibles",
+        "catálogo de rutas"
+      ],
+      "keywords": ["rutas", "disponibles", "catálogo", "cabalgata"],
+      "response": {
+        "text": "Consulta rutas activas en GET /api/rutas/public.",
+        "endpoint": "/api/rutas/public",
+        "authRequired": false
+      }
+    },
+    {
+      "id": "detalle_ruta",
+      "categoria": "rutas",
+      "threshold": 0.68,
+      "utterances": [
+        "detalle de ruta",
+        "ver ruta por id",
+        "información de una ruta"
+      ],
+      "keywords": ["ruta", "detalle", "id", "precio", "dificultad", "duración"],
+      "response": {
+        "text": "Consulta una ruta activa por id con GET /api/rutas/public/{id}.",
+        "endpoint": "/api/rutas/public/{id}",
+        "authRequired": false
+      }
+    },
+    {
+      "id": "crear_reserva",
+      "categoria": "reservaciones",
+      "threshold": 0.74,
+      "utterances": [
+        "cómo reservo",
+        "hacer una reservación",
+        "crear reserva",
+        "agendar cabalgata"
+      ],
+      "keywords": ["reserva", "reservación", "agendar", "ruta", "fecha", "hora", "participantes"],
+      "response": {
+        "text": "Crea una reserva con POST /api/reservaciones enviando rutaId, fecha, horaInicio, cantPersonas y participantes.",
+        "endpoint": "/api/reservaciones",
+        "authRequired": true,
+        "notes": [
+          "cantPersonas debe coincidir con participantes.",
+          "CLIENTE crea su reserva; OPERADOR puede crear para cliente (clienteId) o invitado."
+        ]
+      }
+    },
+    {
+      "id": "mis_reservas",
+      "categoria": "reservaciones",
+      "threshold": 0.7,
+      "utterances": [
+        "ver mis reservas",
+        "reservas mías",
+        "historial de reservas"
+      ],
+      "keywords": ["mis reservas", "mias", "historial", "reservaciones"],
+      "response": {
+        "text": "Consulta tus reservas con GET /api/reservaciones/mias.",
+        "endpoint": "/api/reservaciones/mias",
+        "authRequired": true
+      }
+    },
+    {
+      "id": "actualizar_reserva",
+      "categoria": "reservaciones",
+      "threshold": 0.74,
+      "utterances": [
+        "modificar reserva",
+        "cambiar fecha de reserva",
+        "actualizar participantes"
+      ],
+      "keywords": ["actualizar", "modificar", "cambiar fecha", "participantes", "ruta"],
+      "response": {
+        "text": "Actualiza una reserva con PATCH /api/reservaciones/{id}.",
+        "endpoint": "/api/reservaciones/{id}",
+        "authRequired": true,
+        "notes": [
+          "Solo aplica para reservas no canceladas y no completadas.",
+          "cantPersonas debe coincidir con participantes."
+        ]
+      }
+    },
+    {
+      "id": "cancelar_reserva",
+      "categoria": "reservaciones",
+      "threshold": 0.74,
+      "utterances": [
+        "cancelar reserva",
+        "anular reservación",
+        "dar de baja reserva"
+      ],
+      "keywords": ["cancelar", "anular", "reserva", "reservación"],
+      "response": {
+        "text": "Cancela con PATCH /api/reservaciones/{id}/cancelar.",
+        "endpoint": "/api/reservaciones/{id}/cancelar",
+        "authRequired": true,
+        "notes": [
+          "No se puede cancelar una reserva completada.",
+          "Si ya estaba cancelada, informa que ya fue cancelada."
+        ]
+      }
+    },
+    {
+      "id": "errores_comunes_api",
+      "categoria": "errores",
+      "threshold": 0.66,
+      "utterances": [
+        "qué significa error 400",
+        "por qué me da 401",
+        "error de validación",
+        "mensaje de error api"
+      ],
+      "keywords": ["400", "401", "403", "404", "500", "error", "validación"],
+      "response": {
+        "text": "Los errores de validación y reglas de negocio suelen ser 400; credenciales inválidas 401; usuario inactivo o sin permisos 403.",
+        "authRequired": false
+      }
+    }
+  ]
+}
